@@ -1,0 +1,44 @@
+{
+  "exercise_types": [
+    "Cycling",
+    "Elliptical",
+    "HIIT",
+    "Jump Rope",
+    "Rowing",
+    "Running",
+    "Swimming",
+    "Walking",
+    "Weight Training",
+    "Yoga"
+  ],
+  "met_values": {
+    "Running": 9.8,
+    "Cycling": 7.5,
+    "Swimming": 8.0,
+    "Weight Training": 5.0,
+    "Yoga": 3.0,
+    "HIIT": 12.0,
+    "Walking": 3.5,
+    "Jump Rope": 11.0,
+    "Rowing": 8.5,
+    "Elliptical": 6.0
+  },
+  "features": [
+    "age",
+    "gender",
+    "weight_kg",
+    "height_cm",
+    "bmi",
+    "body_fat_pct",
+    "exercise_encoded",
+    "met_value",
+    "duration_min",
+    "intensity",
+    "heart_rate"
+  ],
+  "metrics": {
+    "mae": 32.93,
+    "r2": 0.9904,
+    "rmse": 45.37
+  }
+}

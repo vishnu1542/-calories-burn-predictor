@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CalorieAI — Burn Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131c;
+    --surface2: #1c1c2e;
+    --border: rgba(255,255,255,0.07);
+    --accent: #ff5e3a;
+    --accent2: #ff9f1c;
+    --accent3: #2ecc71;
+    --text: #f0f0f5;
+    --muted: #6b6b8a;
+    --glow: rgba(255,94,58,0.25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 10%, rgba(255,94,58,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255,159,28,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 40px 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 0 24px var(--glow);
+  }
+
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .badge {
+    background: rgba(255,94,58,0.12);
+    border: 1px solid rgba(255,94,58,0.3);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 50px 0 40px;
+    text-align: center;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 6vw, 68px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 .gradient {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 17px;
+    max-width: 500px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 52px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* Main layout */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-title::before {
+    content: '';
+    width: 3px;
+    height: 16px;
+    background: linear-gradient(var(--accent), var(--accent2));
+    border-radius: 3px;
+  }
+
+  /* Form sections */
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin: 20px 0 12px;
+    font-weight: 600;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .form-group input,
+  .form-group select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255,94,58,0.1);
+  }
+
+  .form-group select option { background: #1c1c2e; }
+
+  /* Gender toggle */
+  .gender-toggle {
+    display: flex;
+    gap: 8px;
+  }
+
+  .gender-btn {
+    flex: 1;
+    padding: 11px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .gender-btn.active {
+    background: rgba(255,94,58,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Intensity slider */
+  .intensity-options {
+    display: flex;
+    gap: 8px;
+  }
+
+  .intensity-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .intensity-btn[data-val="1"].active { background: rgba(46,204,113,0.15); border-color: #2ecc71; color: #2ecc71; }
+  .intensity-btn[data-val="2"].active { background: rgba(255,159,28,0.15); border-color: var(--accent2); color: var(--accent2); }
+  .intensity-btn[data-val="3"].active { background: rgba(255,94,58,0.15); border-color: var(--accent); color: var(--accent); }
+
+  /* Exercise cards */
+  .exercise-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .exercise-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .exercise-card .ex-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+  .exercise-card:hover { border-color: var(--accent); color: var(--text); }
+  .exercise-card.active {
+    background: rgba(255,94,58,0.12);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Submit button */
+  .submit-btn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px var(--glow);
+  }
+
+  .submit-btn:hover { opacity: 0.92; box-shadow: 0 6px 32px var(--glow); }
+  .submit-btn:active { transform: scale(0.99); }
+
+  /* Results panel */
+  .results-panel {
+    position: sticky;
+    top: 24px;
+  }
+
+  .result-placeholder {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .result-placeholder .big-icon {
+    font-size: 56px;
+    display: block;
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+
+  .result-placeholder p { font-size: 14px; line-height: 1.6; }
+
+  /* Result display */
+  .result-display { display: none; }
+
+  .calories-hero {
+    text-align: center;
+    padding: 28px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .calories-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 72px;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -3px;
+  }
+
+  .calories-unit {
+    font-size: 20px;
+    color: var(--muted);
+    font-weight: 300;
+    margin-top: 4px;
+  }
+
+  .calories-exercise {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* Metric chips */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .metric-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+
+  .metric-chip .val {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .metric-chip .lbl {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* Burn rate bar */
+  .burn-bar-section {
+    margin-bottom: 20px;
+  }
+
+  .burn-bar-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .burn-bar-track {
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .burn-bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width: 0%;
+  }
+
+  /* Food equivalents */
+  .food-section {
+    border-top: 1px solid var(--border);
+    padding-top: 18px;
+  }
+
+  .food-title {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .food-items {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .food-item {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+
+  .food-item .count {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+
+  /* Loading */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    background: rgba(255,94,58,0.1);
+    border: 1px solid rgba(255,94,58,0.3);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--accent);
+    font-size: 14px;
+    margin-top: 16px;
+  }
+
+  /* Range input */
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 100px;
+    outline: none;
+    padding: 0;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--glow);
+  }
+
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 48px 0 32px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Pulse animation on result */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in { animation: fadeInUp 0.5s ease forwards; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🔥</div>
+      <div class="logo-text">Calorie<span>AI</span></div>
+    </div>
+    <div class="badge">AI Model R² {{ "%.2f"|format(metrics.r2) }}</div>
+  </header>
+
+  <section class="hero">
+    <h1>Predict Your<br><span class="gradient">Calories Burned</span></h1>
+    <p>AI-powered predictions using Gradient Boosting trained on 10,000+ workout sessions.</p>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-val">10K+</div>
+        <div class="stat-label">Training Samples</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">{{ "%.0f"|format(metrics.r2 * 100) }}%</div>
+        <div class="stat-label">Accuracy (R²)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">±{{ metrics.mae }}</div>
+        <div class="stat-label">Avg Error (kcal)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">10</div>
+        <div class="stat-label">Exercise Types</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="main-grid">
+    <!-- Form -->
+    <div class="card">
+      <div class="card-title">Your Profile & Workout</div>
+
+      <div class="section-label">Personal Info</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" id="age" min="10" max="90" value="28" />
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <div class="gender-toggle">
+            <div class="gender-btn active" data-val="0" onclick="setGender(0)">♀ Female</div>
+            <div class="gender-btn" data-val="1" onclick="setGender(1)">♂ Male</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-top:12px">
+        <div class="form-group">
+          <label>Weight (kg)</label>
+          <input type="number" id="weight" min="30" max="200" step="0.1" value="65" />
+        </div>
+        <div class="form-group">
+          <label>Height (cm)</label>
+          <input type="number" id="height" min="100" max="220" value="165" />
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:12px">
+        <label>Body Fat % <span style="color:var(--muted);font-size:11px">(optional — estimate ok)</span></label>
+        <input type="range" id="body_fat" min="5" max="50" value="20" oninput="document.getElementById('bf_val').textContent=this.value+'%'" />
+        <div class="range-labels"><span>5%</span><span id="bf_val">20%</span><span>50%</span></div>
+      </div>
+
+      <div class="section-label" style="margin-top:24px">Exercise Type</div>
+      <div class="exercise-grid" id="exerciseGrid">
+        {% set icons = {'Cycling':'🚴','Elliptical':'⚙️','HIIT':'⚡','Jump Rope':'🪢','Rowing':'🚣','Running':'🏃','Swimming':'🏊','Walking':'🚶','Weight Training':'🏋️','Yoga':'🧘'} %}
+        {% for ex in exercise_types %}
+        <div class="exercise-card {% if loop.first %}active{% endif %}" onclick="selectExercise(this, '{{ ex }}')" data-ex="{{ ex }}">
+          <span class="ex-icon">{{ icons.get(ex, '💪') }}</span>
+          {{ ex }}
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="section-label" style="margin-top:24px">Workout Details</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Duration (minutes)</label>
+          <input type="number" id="duration" min="5" max="300" value="45" />
+        </div>
+        <div class="form-group">
+          <label>Heart Rate (BPM)</label>
+          <input type="number" id="heart_rate" min="50" max="220" value="140" />
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:12px">
+        <label>Intensity Level</label>
+        <div class="intensity-options">
+          <div class="intensity-btn" data-val="1" onclick="setIntensity(1)">🟢 Low</div>
+          <div class="intensity-btn active" data-val="2" onclick="setIntensity(2)">🟡 Medium</div>
+          <div class="intensity-btn" data-val="3" onclick="setIntensity(3)">🔴 High</div>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="predict()">🔥 Predict Calories Burned</button>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-panel">
+      <div class="card">
+        <div class="card-title">Prediction Result</div>
+
+        <div id="placeholder" class="result-placeholder">
+          <span class="big-icon">🔥</span>
+          <p>Fill in your details and hit <strong>Predict</strong> to see how many calories you'll burn.</p>
+        </div>
+
+        <div id="loading" class="loading">
+          <div class="spinner"></div>
+          <p style="color:var(--muted);font-size:14px">Crunching numbers...</p>
+        </div>
+
+        <div id="resultDisplay" class="result-display">
+          <div class="calories-hero">
+            <div class="calories-value" id="caloriesVal">0</div>
+            <div class="calories-unit">kcal burned</div>
+            <div class="calories-exercise" id="exerciseLabel">—</div>
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric-chip">
+              <div class="val" id="calPerMin">—</div>
+              <div class="lbl">kcal / min</div>
+            </div>
+            <div class="metric-chip">
+              <div class="val" id="bmiVal">—</div>
+              <div class="lbl">Your BMI</div>
+            </div>
+            <div class="metric-chip">
+              <div class="val" id="metVal">—</div>
+              <div class="lbl">MET Value</div>
+            </div>
+            <div class="metric-chip">
+              <div class="val" id="intensityVal">—</div>
+              <div class="lbl">Intensity</div>
+            </div>
+          </div>
+
+          <div class="burn-bar-section">
+            <div class="burn-bar-header">
+              <span>Burn Rate</span>
+              <span id="burnLabel">—</span>
+            </div>
+            <div class="burn-bar-track">
+              <div class="burn-bar-fill" id="burnBar"></div>
+            </div>
+          </div>
+
+          <div class="food-section">
+            <div class="food-title">🍽️ Equivalent to burning off</div>
+            <div class="food-items" id="foodItems"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Built with FastAPI + Gradient Boosting · CalorieAI v1.0</footer>
+</div>
+
+<script>
+  let selectedGender = 0;
+  let selectedIntensity = 2;
+  let selectedExercise = document.querySelector('.exercise-card.active')?.dataset.ex || 'Cycling';
+
+  function setGender(val) {
+    selectedGender = val;
+    document.querySelectorAll('.gender-btn').forEach(b => b.classList.toggle('active', +b.dataset.val === val));
+  }
+
+  function setIntensity(val) {
+    selectedIntensity = val;
+    document.querySelectorAll('.intensity-btn').forEach(b => b.classList.toggle('active', +b.dataset.val === val));
+  }
+
+  function selectExercise(el, ex) {
+    selectedExercise = ex;
+    document.querySelectorAll('.exercise-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    // Auto-suggest heart rate
+    const hrMap = {Running:155,Cycling:140,Swimming:145,HIIT:170,'Weight Training':130,Yoga:90,Walking:105,'Jump Rope':165,Rowing:150,Elliptical:135};
+    if (hrMap[ex]) document.getElementById('heart_rate').value = hrMap[ex];
+  }
+
+  async function predict() {
+    const payload = {
+      age: +document.getElementById('age').value,
+      gender: selectedGender,
+      weight_kg: +document.getElementById('weight').value,
+      height_cm: +document.getElementById('height').value,
+      body_fat_pct: +document.getElementById('body_fat').value,
+      exercise_type: selectedExercise,
+      duration_min: +document.getElementById('duration').value,
+      intensity: selectedIntensity,
+      heart_rate: +document.getElementById('heart_rate').value
+    };
+
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('resultDisplay').style.display = 'none';
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('errorMsg').style.display = 'none';
+
+    try {
+      const res = await fetch('/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      document.getElementById('loading').style.display = 'none';
+
+      if (!data.success) throw new Error(data.error);
+
+      // Animate calories counter
+      animateCount('caloriesVal', 0, data.calories_burned, 1200);
+
+      document.getElementById('exerciseLabel').textContent =
+        `${data.exercise_type} · ${data.duration_min} min`;
+      document.getElementById('calPerMin').textContent = data.calories_per_min;
+      document.getElementById('bmiVal').textContent = data.bmi;
+      document.getElementById('metVal').textContent = data.met_value;
+      document.getElementById('intensityVal').textContent = data.intensity_label;
+
+      // Burn bar (max ~1500 kcal)
+      const pct = Math.min((data.calories_burned / 1500) * 100, 100);
+      document.getElementById('burnBar').style.width = pct + '%';
+      const level = pct < 30 ? 'Light burn 🌿' : pct < 60 ? 'Good burn 🔥' : 'Intense burn 💥';
+      document.getElementById('burnLabel').textContent = level;
+
+      // Food equivalents
+      const foodDiv = document.getElementById('foodItems');
+      foodDiv.innerHTML = data.food_equivalents.map(f =>
+        `<div class="food-item"><span>${f.item}</span><span class="count">${f.count}×</span></div>`
+      ).join('');
+
+      const rd = document.getElementById('resultDisplay');
+      rd.style.display = 'block';
+      rd.classList.add('fade-in');
+
+    } catch (err) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('placeholder').style.display = 'block';
+      const em = document.getElementById('errorMsg');
+      em.style.display = 'block';
+      em.textContent = '⚠️ ' + (err.message || 'Prediction failed. Please check inputs.');
+    }
+  }
+
+  function animateCount(id, from, to, duration) {
+    const el = document.getElementById(id);
+    const start = performance.now();
+    function update(now) {
+      const t = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      el.textContent = Math.round(from + (to - from) * ease);
+      if (t < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+</script>
+</body>
+</html>
